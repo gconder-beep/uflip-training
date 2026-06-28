@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UFLIP Flipper Training Game</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0e1118;color:#e2e8f0;min-height:100vh}
+
+/* ── START SCREEN ── */
+#startScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 20px}
+.start-logo{font-size:13px;font-weight:900;letter-spacing:4px;color:#3b82f6;text-transform:uppercase;margin-bottom:14px}
+.start-title{font-size:44px;font-weight:900;color:#fff;text-align:center;margin-bottom:8px;line-height:1.1}
+.start-subtitle{font-size:17px;color:#6b7280;text-align:center;margin-bottom:36px}
+.rules-card{background:#161b28;border:1px solid #1e2d45;border-radius:14px;padding:26px 30px;max-width:560px;width:100%;margin-bottom:32px}
+.rules-title{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:#3b82f6;font-weight:700;margin-bottom:18px}
+.rule{display:flex;gap:14px;align-items:flex-start;margin-bottom:14px}
+.rule:last-child{margin-bottom:0}
+.rule-num{background:#1e3a8a;color:#93c5fd;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:1px}
+.rule-text{font-size:14px;color:#d1d5db;line-height:1.5}
+.btn-start{background:#2563eb;color:#fff;border:none;padding:15px 52px;border-radius:10px;font-size:17px;font-weight:700;cursor:pointer;transition:all .2s}
+.btn-start:hover{background:#1d4ed8;transform:translateY(-2px);box-shadow:0 8px 25px rgba(37,99,235,.3)}
+
+/* ── GAME SCREEN ── */
+#gameScreen{display:none}
+.game-header{background:#161b28;border-bottom:1px solid #1e2d45;padding:13px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+.game-brand{font-size:15px;font-weight:900;color:#3b82f6;letter-spacing:3px}
+.game-stats{display:flex;gap:20px;align-items:center}
+.stat{text-align:center}
+.stat-num{font-size:20px;font-weight:800;color:#fff}
+.stat-label{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px}
+.stat-div{width:1px;height:32px;background:#1e2d45}
+.prog-wrap{background:#161b28;padding:6px 24px 10px;border-bottom:1px solid #0e1118}
+.prog-label{font-size:11px;color:#4b5563;margin-bottom:4px}
+.prog-track{background:#1e2d45;height:5px;border-radius:3px}
+.prog-fill{background:linear-gradient(90deg,#2563eb,#7c3aed);height:100%;border-radius:3px;transition:width .4s cubic-bezier(.4,0,.2,1)}
+.game-content{max-width:1300px;margin:22px auto;padding:0 20px}
+.scene-info{text-align:center;margin-bottom:18px}
+.scene-counter{font-size:11px;color:#4b5563;text-transform:uppercase;letter-spacing:1px}
+.scene-desc{font-size:15px;color:#9ca3af;margin-top:3px;font-weight:500}
+
+/* ── PANELS ── */
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px}
+@media(max-width:860px){.panels{grid-template-columns:1fr}}
+
+/* Cart card */
+.cart-card{background:#161b28;border-radius:12px;overflow:hidden;border:1px solid #1e2d45}
+.plat-bar{padding:12px 16px;display:flex;align-items:center;gap:10px}
+.plat-name{font-size:14px;font-weight:800;letter-spacing:.3px}
+.plat-tag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;opacity:.75;margin-left:auto;background:rgba(255,255,255,.15);padding:2px 8px;border-radius:4px}
+.p-tm{background:#026cdf;color:#fff}
+.p-axs{background:#cc0000;color:#fff}
+.p-tw{background:#1a1a1a;color:#f0c040;border-bottom:2px solid #f0c040}
+.p-etix{background:#b91c1c;color:#fff}
+.p-sg{background:#064e3b;color:#10b981}
+.p-mlb{background:#041e42;color:#fff}
+.cart-body{padding:16px}
+.ev-title{font-size:16px;font-weight:700;color:#f9fafb;margin-bottom:2px}
+.ev-date{font-size:13px;color:#6b7280;margin-bottom:2px}
+.ev-venue{font-size:13px;color:#6b7280;margin-bottom:14px}
+.seats-block{background:#0e1118;border-radius:8px;padding:11px 14px;margin-bottom:11px}
+.s-row{display:flex;justify-content:space-between;align-items:baseline;padding:4px 0;font-size:13px;border-bottom:1px solid #161b28}
+.s-row:last-child{border-bottom:none}
+.s-key{color:#9ca3af}
+.s-val{color:#e2e8f0;font-weight:600;text-align:right;max-width:60%}
+.price-block{padding:0 2px}
+.p-line{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:#6b7280}
+.p-line.tot{border-top:1px solid #1e2d45;margin-top:6px;padding-top:8px;font-size:15px;font-weight:700;color:#fff}
+
+/* UFLIP card */
+.uflip-card{background:#161b28;border-radius:12px;overflow:hidden;border:1px solid #1e3a8a}
+.uf-bar{background:#1e3a8a;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+.uf-bar-title{font-size:14px;font-weight:700}
+.uf-bar-sub{font-size:11px;opacity:.65}
+.uf-body{padding:14px 16px}
+.uf-field{margin-bottom:9px}
+.uf-label{font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:#4b5563;font-weight:600;margin-bottom:3px}
+.uf-val{background:#0e1118;border:1px solid #1e2d45;border-radius:6px;padding:8px 12px;font-size:13px;color:#e2e8f0;word-break:break-word}
+.uf-val.err{border-color:#dc2626;background:#1c0505;color:#fca5a5;font-weight:600}
+.uf-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+
+/* ── CONTROLS ── */
+.controls{max-width:700px;margin:0 auto 30px}
+.q-prompt{text-align:center;font-size:15px;color:#9ca3af;margin-bottom:14px;font-weight:500}
+.btn-row{display:flex;gap:12px;justify-content:center;margin-bottom:14px}
+.btn{border:none;padding:13px 34px;border-radius:9px;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:8px}
+.btn:hover{filter:brightness(1.12);transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn-ok{background:#16a34a;color:#fff}
+.btn-err{background:#dc2626;color:#fff}
+.btn-sub{background:#7c3aed;color:#fff;padding:11px 28px}
+.btn-next{background:#2563eb;color:#fff}
+
+/* Error picker */
+.err-picker{background:#161b28;border:1px solid #374151;border-radius:10px;padding:18px 20px;display:none;margin-bottom:14px}
+.err-picker h4{font-size:12px;font-weight:700;color:#d1d5db;margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px}
+.err-opt{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:7px;cursor:pointer;margin-bottom:5px;transition:background .1s}
+.err-opt:hover{background:#1e2d45}
+.err-opt input{width:16px;height:16px;accent-color:#7c3aed;cursor:pointer;flex-shrink:0}
+.err-opt label{font-size:14px;color:#d1d5db;cursor:pointer}
+
+/* Feedback */
+.fb-box{border-radius:10px;padding:16px 20px;display:none;margin-bottom:14px}
+.fb-win{background:#052e16;border:1px solid #16a34a}
+.fb-lose{background:#1c0505;border:1px solid #dc2626}
+.fb-head{font-size:18px;font-weight:800;margin-bottom:5px}
+.fb-win .fb-head{color:#4ade80}
+.fb-lose .fb-head{color:#f87171}
+.fb-body{font-size:13px;color:#9ca3af;line-height:1.6}
+
+/* ── FINAL SCREEN ── */
+#finalScreen{display:none;min-height:100vh;padding:50px 20px}
+.final-inner{max-width:640px;margin:0 auto;text-align:center}
+.final-lbl{font-size:12px;color:#4b5563;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:12px}
+.final-score{font-size:90px;font-weight:900;color:#3b82f6;line-height:1}
+.final-of{font-size:22px;color:#6b7280;margin-bottom:4px}
+.final-grade{font-size:30px;font-weight:800;margin-bottom:6px}
+.final-msg{font-size:15px;color:#6b7280;margin-bottom:28px}
+.review-table{background:#161b28;border-radius:12px;overflow:hidden;margin-bottom:26px;text-align:left}
+.rev-row{display:flex;gap:12px;align-items:flex-start;padding:12px 16px;border-bottom:1px solid #0e1118}
+.rev-row:last-child{border-bottom:none}
+.rev-icon{font-size:17px;flex-shrink:0;margin-top:1px}
+.rev-scenario{font-size:13px;color:#e2e8f0;font-weight:600}
+.rev-detail{font-size:12px;color:#6b7280;margin-top:2px}
+.btn-restart{background:#2563eb;color:#fff;border:none;padding:14px 46px;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;transition:all .2s}
+.btn-restart:hover{background:#1d4ed8;transform:translateY(-2px)}
+</style>
+</head>
+<body>
+
+<!-- ═══ START SCREEN ═══ -->
+<div id="startScreen">
+  <div class="start-logo">UFLIP</div>
+  <div class="start-title">Flipper Training Game</div>
+  <div class="start-subtitle">Can you spot the submission errors?</div>
+  <div class="rules-card">
+    <div class="rules-title">How to Play</div>
+    <div class="rule"><div class="rule-num">1</div><div class="rule-text">You'll see a real <strong>ticket cart</strong> on the left and a <strong>UFLIP submission</strong> on the right.</div></div>
+    <div class="rule"><div class="rule-num">2</div><div class="rule-text">Compare both carefully — check the event, seats, quantity, price, and delivery type.</div></div>
+    <div class="rule"><div class="rule-num">3</div><div class="rule-text">Click <strong style="color:#4ade80">Looks Correct</strong> if everything matches, or <strong style="color:#f87171">Something's Wrong</strong> if you spot an issue.</div></div>
+    <div class="rule"><div class="rule-num">4</div><div class="rule-text">If there's an error, identify what type it is to earn the point. 8 scenarios total.</div></div>
+  </div>
+  <button class="btn-start" onclick="startGame()">Start Training →</button>
+</div>
+
+<!-- ═══ GAME SCREEN ═══ -->
+<div id="gameScreen">
+  <div class="game-header">
+    <div class="game-brand">UFLIP</div>
+    <div class="game-stats">
+      <div class="stat"><div class="stat-num" id="scoreNum">0</div><div class="stat-label">Score</div></div>
+      <div class="stat-div"></div>
+      <div class="stat"><div class="stat-num" id="qNum">1/8</div><div class="stat-label">Question</div></div>
+    </div>
+  </div>
+  <div class="prog-wrap">
+    <div class="prog-label" id="progLabel">Question 1 of 8</div>
+    <div class="prog-track"><div class="prog-fill" id="progFill" style="width:12.5%"></div></div>
+  </div>
+
+  <div class="game-content">
+    <div class="scene-info">
+      <div class="scene-counter" id="sceneCounter">SCENARIO 1 OF 8</div>
+      <div class="scene-desc" id="sceneDesc">Review the cart and the submission carefully</div>
+    </div>
+
+    <div class="panels">
+      <div class="cart-card">
+        <div class="plat-bar" id="platBar">
+          <span class="plat-name" id="platName">Ticketmaster</span>
+          <span class="plat-tag">CART</span>
+        </div>
+        <div class="cart-body" id="cartBody"></div>
+      </div>
+      <div class="uflip-card">
+        <div class="uf-bar">
+          <div class="uf-bar-title">UFLIP Submission</div>
+          <div class="uf-bar-sub">flip.uflip.com</div>
+        </div>
+        <div class="uf-body" id="uflipBody"></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="q-prompt">Does the UFLIP submission match the cart?</div>
+      <div class="btn-row" id="answerBtns">
+        <button class="btn btn-ok" onclick="handleAnswer('correct')">✓&nbsp;&nbsp;Looks Correct</button>
+        <button class="btn btn-err" onclick="handleAnswer('wrong')">✗&nbsp;&nbsp;Something's Wrong</button>
+      </div>
+
+      <div class="err-picker" id="errPicker">
+        <h4>What type of error is it?</h4>
+        <div class="err-opt"><input type="radio" name="et" id="e1" value="quantity"><label for="e1">Wrong quantity (number of tickets)</label></div>
+        <div class="err-opt"><input type="radio" name="et" id="e2" value="seats"><label for="e2">Wrong section, row, or seat numbers</label></div>
+        <div class="err-opt"><input type="radio" name="et" id="e3" value="price"><label for="e3">Wrong total price</label></div>
+        <div class="err-opt"><input type="radio" name="et" id="e4" value="event"><label for="e4">Wrong event, date, or venue</label></div>
+        <div class="err-opt"><input type="radio" name="et" id="e5" value="delivery"><label for="e5">Wrong delivery method</label></div>
+        <div class="err-opt"><input type="radio" name="et" id="e6" value="seattype"><label for="e6">Wrong seat type</label></div>
+        <div class="btn-row" style="justify-content:flex-start;margin:12px 0 0">
+          <button class="btn btn-sub" onclick="submitError()">Submit Answer</button>
+        </div>
+      </div>
+
+      <div class="fb-box" id="fbBox">
+        <div class="fb-head" id="fbHead"></div>
+        <div class="fb-body" id="fbBody"></div>
+        <div class="btn-row" style="margin-top:14px;justify-content:flex-start">
+          <button class="btn btn-next" id="nextBtn" onclick="nextScenario()">Next Scenario →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ FINAL SCREEN ═══ -->
+<div id="finalScreen">
+  <div class="final-inner">
+    <div class="final-lbl">Training Complete</div>
+    <div class="final-score" id="finalScore">0</div>
+    <div class="final-of" id="finalOf">out of 8</div>
+    <div class="final-grade" id="finalGrade"></div>
+    <div class="final-msg" id="finalMsg"></div>
+    <div class="review-table" id="reviewTable"></div>
+    <button class="btn-restart" onclick="restartGame()">Play Again</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  SCENARIO DATA  (built from real screenshots)
+// ═══════════════════════════════════════════════
+const SCENARIOS = [
+  // ── 1 · Ticketmaster · James Taylor ✅ CORRECT ──
+  {
+    platform:'Ticketmaster', platClass:'p-tm',
+    cart:{
+      event:'James Taylor & His All-Star Band',
+      date:'Mon, Jun 29, 2026  •  7:30 PM',
+      venue:'Albany Med Health System at SPAC',
+      loc:'Saratoga Springs, New York',
+      seats:[
+        {k:'Tickets',v:'4 × General Admission Lawn'},
+        {k:'Ticket Type',v:'GA Lawn — Full View'},
+        {k:'Delivery',v:'Mobile (Free)'}
+      ],
+      prices:[
+        {l:'Base Price',v:'$25.00 × 4'},
+        {l:'Service Fees',v:'$10.00 × 4'}
+      ],
+      total:'$140.00'
+    },
+    uflip:{
+      event:'James Taylor & His All-Star Band — SPAC — Saratoga Springs, NY — Mon Jun 29, 2026 7:30pm',
+      section:'GA', row:'N/A', first:'N/A', last:'N/A',
+      qty:'4', price:'$140.00', delivery:'Mobile', seatType:'General Admission',
+      errFields:[]
+    },
+    isCorrect:true, correctErr:null,
+    explain:'✓ Everything matches! 4 GA tickets at $35 each (base $25 + $10 fee) = $140.00. Event, venue, date, and delivery are all correct.'
+  },
+
+  // ── 2 · AXS · SOMBR ❌ WRONG QUANTITY ──
+  {
+    platform:'AXS', platClass:'p-axs',
+    cart:{
+      event:'SOMBR',
+      date:'Fri, Oct 16, 2026  •  7:30 PM',
+      venue:'Paycom Center',
+      loc:'Oklahoma City, OK',
+      seats:[
+        {k:'Section',v:'118'},
+        {k:'Row',v:'A'},
+        {k:'Seats',v:'1, 2, 3, 4'},
+        {k:'Ticket Type',v:'Standard'},
+        {k:'Delivery',v:'AXS Mobile ID (Free)'},
+        {k:'Items Total',v:'4 tickets'}
+      ],
+      prices:[{l:'Order Total',v:'$614.40'}],
+      total:'$614.40'
+    },
+    uflip:{
+      event:'SOMBR — Paycom Center — Oklahoma City, OK — Fri Oct 16, 2026 7:30pm',
+      section:'118', row:'A', first:'1', last:'4',
+      qty:'2',            // ← ERROR (should be 4)
+      price:'$614.40', delivery:'Mobile', seatType:'Standard',
+      errFields:['qty']
+    },
+    isCorrect:false, correctErr:'quantity',
+    explain:'The cart shows 4 tickets — Seats 1, 2, 3, and 4. The submission entered a quantity of 2. Always count every seat listed individually!'
+  },
+
+  // ── 3 · TicketWeb · Rolling Quartz ❌ WRONG PRICE ──
+  {
+    platform:'TicketWeb', platClass:'p-tw',
+    cart:{
+      event:'Rolling Quartz [My Turn] 2026 Tour',
+      date:'Tue, Sep 29, 2026  •  7:00 PM CDT',
+      venue:'Oklahoma City, OK',
+      loc:'Doors open 6:00 PM CDT',
+      seats:[
+        {k:'Tickets',v:'2 × General Admission'},
+        {k:'Delivery',v:'eTickets (Free)'}
+      ],
+      prices:[
+        {l:'Tickets (2 × $29.99)',v:'$59.98'},
+        {l:'Service Fees',v:'$12.60'}
+      ],
+      total:'$72.58'
+    },
+    uflip:{
+      event:'Rolling Quartz [My Turn] 2026 Tour — Oklahoma City, OK — Tue Sep 29, 2026 7:00pm',
+      section:'GA', row:'N/A', first:'N/A', last:'N/A',
+      qty:'2',
+      price:'$59.98',    // ← ERROR (should be $72.58)
+      delivery:'eTickets', seatType:'General Admission',
+      errFields:['price']
+    },
+    isCorrect:false, correctErr:'price',
+    explain:'The submission entered $59.98 — that\'s the ticket subtotal only. The correct grand total including service fees ($12.60) is $72.58. Always submit the final total shown at checkout!'
+  },
+
+  // ── 4 · eTix · Molly Tuttle ✅ CORRECT ──
+  {
+    platform:'eTix', platClass:'p-etix',
+    cart:{
+      event:'Molly Tuttle',
+      date:'Sat, Sep 12, 2026  •  7:30 PM',
+      venue:'Historic Park Theatre & Event Center',
+      loc:'',
+      seats:[
+        {k:'Section',v:'ORCH RGT'},
+        {k:'Row',v:'G'},
+        {k:'Seats',v:'6, 8, 10, 12  (4 tickets)'},
+        {k:'Ticket Type',v:'Individual — $68.00 each'},
+        {k:'Delivery',v:'Print at Home / Mobile (Free)'}
+      ],
+      prices:[
+        {l:'Tickets (4 × $68.00)',v:'$272.00'},
+        {l:'Order Fee',v:'$3.00'}
+      ],
+      total:'$275.00'
+    },
+    uflip:{
+      event:'Molly Tuttle — Historic Park Theatre & Event Center — Sep 12, 2026 7:30pm',
+      section:'ORCH RGT', row:'G', first:'6', last:'12',
+      qty:'4', price:'$275.00', delivery:'Print at Home', seatType:'Standard',
+      errFields:[]
+    },
+    isCorrect:true, correctErr:null,
+    explain:'✓ Correct! Seats 6, 8, 10, 12 in ORCH RGT Row G. First seat 6, last seat 12, qty 4, total $275.00 (includes the $3.00 order fee). Note: seats are non-consecutive — always use the highest seat number as Last Seat.'
+  },
+
+  // ── 5 · SeatGeek · NHL Parking ❌ WRONG PRICE ──
+  {
+    platform:'SeatGeek', platClass:'p-sg',
+    cart:{
+      event:'PARKING: 2027 Navy Federal CU NHL Stadium Series',
+      date:'Sat, Feb 20, 2027  •  7:00 PM',
+      venue:'AT&T Stadium',
+      loc:'Arlington, TX',
+      seats:[
+        {k:'Parking Location',v:'Parking Lot 5'},
+        {k:'Delivery',v:'Instant — SeatGeek App'},
+        {k:'Notes',v:'Reserved Parking Space'}
+      ],
+      prices:[
+        {l:'Ticket Price',v:'$295.00 × 1'},
+        {l:'Fees',v:'$71.38'},
+        {l:'Tax',v:'$24.04'}
+      ],
+      total:'$390.42'
+    },
+    uflip:{
+      event:'PARKING: 2027 Navy Federal CU NHL Stadium Series — AT&T Stadium — Arlington, TX — Sat Feb 20, 2027 7:00pm',
+      section:'Parking Lot 5', row:'N/A', first:'N/A', last:'N/A',
+      qty:'1',
+      price:'$295.00',   // ← ERROR (should be $390.42)
+      delivery:'Mobile', seatType:'Parking',
+      errFields:['price']
+    },
+    isCorrect:false, correctErr:'price',
+    explain:'The submission entered $295.00 — that\'s the face value only. With $71.38 in fees and $24.04 in tax, the correct total is $390.42. Always submit the Grand Total, never the ticket price alone!'
+  },
+
+  // ── 6 · MLB · Reds at Brewers ❌ WRONG SECTION ──
+  {
+    platform:'MLB.com', platClass:'p-mlb',
+    cart:{
+      event:'Reds at Brewers',
+      date:'Tue, Jun 30, 2026  •  6:40 PM CDT',
+      venue:'American Family Field',
+      loc:'Milwaukee, WI',
+      seats:[
+        {k:'Section',v:'411'},
+        {k:'Row',v:'18'},
+        {k:'Seat 1',v:'Left Aisle  —  $16.00'},
+        {k:'Seats 2–4',v:'$16.00 × 3  =  $48.00'},
+        {k:'Total Tickets',v:'4'},
+        {k:'Delivery',v:'MLB Ballpark App (Free)'}
+      ],
+      prices:[
+        {l:'Tickets (4 × $16.00)',v:'$64.00'},
+        {l:'Game-Per-Ticket Fee',v:'$16.00'}
+      ],
+      total:'$80.00'
+    },
+    uflip:{
+      event:'Reds at Brewers — American Family Field — Milwaukee, WI — Tue Jun 30, 2026 6:40pm',
+      section:'114',     // ← ERROR (should be 411)
+      row:'18', first:'1', last:'4',
+      qty:'4', price:'$80.00', delivery:'Mobile', seatType:'Standard',
+      errFields:['section']
+    },
+    isCorrect:false, correctErr:'seats',
+    explain:'The section was entered as "114" but the cart clearly shows Section 411. The digits were transposed! Always read 3-digit section numbers carefully — 114 ≠ 411.'
+  },
+
+  // ── 7 · AXS · SOMBR ✅ CORRECT ──
+  {
+    platform:'AXS', platClass:'p-axs',
+    cart:{
+      event:'SOMBR',
+      date:'Fri, Oct 16, 2026  •  7:30 PM',
+      venue:'Paycom Center',
+      loc:'Oklahoma City, OK',
+      seats:[
+        {k:'Section',v:'118'},
+        {k:'Row',v:'A'},
+        {k:'Seats',v:'1, 2, 3, 4'},
+        {k:'Ticket Type',v:'Standard'},
+        {k:'Delivery',v:'AXS Mobile ID (Free)'},
+        {k:'Items Total',v:'4 tickets'}
+      ],
+      prices:[{l:'Order Total',v:'$614.40'}],
+      total:'$614.40'
+    },
+    uflip:{
+      event:'SOMBR — Paycom Center — Oklahoma City, OK — Fri Oct 16, 2026 7:30pm',
+      section:'118', row:'A', first:'1', last:'4',
+      qty:'4', price:'$614.40', delivery:'Mobile', seatType:'Standard',
+      errFields:[]
+    },
+    isCorrect:true, correctErr:null,
+    explain:'✓ Perfect! Sec 118, Row A, Seats 1–4, qty 4, total $614.40. Delivery and seat type both correct. This is what a clean submission looks like!'
+  },
+
+  // ── 8 · eTix · Molly Tuttle ❌ WRONG LAST SEAT ──
+  {
+    platform:'eTix', platClass:'p-etix',
+    cart:{
+      event:'Molly Tuttle',
+      date:'Sat, Sep 12, 2026  •  7:30 PM',
+      venue:'Historic Park Theatre & Event Center',
+      loc:'',
+      seats:[
+        {k:'Section',v:'ORCH RGT'},
+        {k:'Row',v:'G'},
+        {k:'Seats',v:'6, 8, 10, 12  (4 tickets)'},
+        {k:'Ticket Type',v:'Individual — $68.00 each'},
+        {k:'Delivery',v:'Print at Home / Mobile (Free)'}
+      ],
+      prices:[
+        {l:'Tickets (4 × $68.00)',v:'$272.00'},
+        {l:'Order Fee',v:'$3.00'}
+      ],
+      total:'$275.00'
+    },
+    uflip:{
+      event:'Molly Tuttle — Historic Park Theatre & Event Center — Sep 12, 2026 7:30pm',
+      section:'ORCH RGT', row:'G', first:'6',
+      last:'10',         // ← ERROR (should be 12)
+      qty:'4', price:'$275.00', delivery:'Print at Home', seatType:'Standard',
+      errFields:['last']
+    },
+    isCorrect:false, correctErr:'seats',
+    explain:'The last seat was entered as 10, but the cart lists seats 6, 8, 10, AND 12. The correct last seat is 12. With non-consecutive seats always use the highest seat number as your Last Seat value.'
+  }
+];
+
+// ═══════════════════════════════════════════════
+//  GAME STATE
+// ═══════════════════════════════════════════════
+let G = { cur:0, score:0, history:[], answered:false };
+
+function startGame(){
+  G = {cur:0, score:0, history:[], answered:false};
+  show('gameScreen'); hide('startScreen'); hide('finalScreen');
+  renderScene();
+}
+
+function renderScene(){
+  const s = SCENARIOS[G.cur];
+  const n = G.cur+1, tot = SCENARIOS.length;
+
+  // Header
+  id('scoreNum').textContent = G.score;
+  id('qNum').textContent = `${n}/${tot}`;
+  id('progLabel').textContent = `Question ${n} of ${tot}`;
+  id('progFill').style.width = `${(n/tot)*100}%`;
+  id('sceneCounter').textContent = `SCENARIO ${n} OF ${tot}`;
+  id('sceneDesc').textContent = `${s.platform}  —  ${s.cart.event}`;
+
+  // Platform bar
+  const pb = id('platBar');
+  pb.className = `plat-bar ${s.platClass}`;
+  id('platName').textContent = s.platform;
+
+  // Cart
+  id('cartBody').innerHTML = buildCart(s.cart);
+
+  // UFLIP
+  id('uflipBody').innerHTML = buildUflip(s.uflip, false);
+
+  // Reset controls
+  id('answerBtns').style.display = 'flex';
+  id('errPicker').style.display = 'none';
+  id('fbBox').style.display = 'none';
+  document.querySelectorAll('input[name="et"]').forEach(r => r.checked=false);
+  G.answered = false;
+}
+
+function buildCart(c){
+  const seatsHtml = c.seats.map(s=>`<div class="s-row"><span class="s-key">${s.k}</span><span class="s-val">${s.v}</span></div>`).join('');
+  const pricesHtml = c.prices.map(p=>`<div class="p-line"><span>${p.l}</span><span>${p.v}</span></div>`).join('');
+  return `
+    <div class="ev-title">${c.event}</div>
+    <div class="ev-date">${c.date}</div>
+    <div class="ev-venue">${c.venue}${c.loc?' · '+c.loc:''}</div>
+    <div class="seats-block">${seatsHtml}</div>
+    <div class="price-block">
+      ${pricesHtml}
+      <div class="p-line tot"><span>Total</span><span>${c.total}</span></div>
+    </div>`;
+}
+
+function buildUflip(u, reveal){
+  const v = (field,val) => {
+    const isErr = reveal && u.errFields.includes(field);
+    return `<div class="uf-val${isErr?' err':''}">${val}</div>`;
+  };
+  return `
+    <div class="uf-field"><div class="uf-label">Event</div>${v('event',u.event)}</div>
+    <div class="uf-grid">
+      <div class="uf-field"><div class="uf-label">Section</div>${v('section',u.section)}</div>
+      <div class="uf-field"><div class="uf-label">Row</div>${v('row',u.row)}</div>
+    </div>
+    <div class="uf-grid">
+      <div class="uf-field"><div class="uf-label">First Seat</div>${v('first',u.first)}</div>
+      <div class="uf-field"><div class="uf-label">Last Seat</div>${v('last',u.last)}</div>
+    </div>
+    <div class="uf-grid">
+      <div class="uf-field"><div class="uf-label">Quantity</div>${v('qty',u.qty)}</div>
+      <div class="uf-field"><div class="uf-label">Total Price</div>${v('price',u.price)}</div>
+    </div>
+    <div class="uf-grid">
+      <div class="uf-field"><div class="uf-label">Delivery</div>${v('delivery',u.delivery)}</div>
+      <div class="uf-field"><div class="uf-label">Seat Type</div>${v('seatType',u.seatType)}</div>
+    </div>`;
+}
+
+function handleAnswer(ans){
+  if(G.answered) return;
+  const s = SCENARIOS[G.cur];
+  id('answerBtns').style.display = 'none';
+  if(ans==='correct'){
+    showFeedback(s.isCorrect, s);
+  } else {
+    if(s.isCorrect){
+      showFeedback(false, s);
+    } else {
+      id('errPicker').style.display = 'block';
+    }
+  }
+}
+
+function submitError(){
+  const sel = document.querySelector('input[name="et"]:checked');
+  if(!sel){ alert('Please select an error type.'); return; }
+  const s = SCENARIOS[G.cur];
+  id('errPicker').style.display = 'none';
+  showFeedback(sel.value === s.correctErr, s);
+}
+
+function showFeedback(win, s){
+  G.answered = true;
+  if(win) G.score++;
+  G.history.push({s, win});
+  id('scoreNum').textContent = G.score;
+
+  // Reveal errors
+  id('uflipBody').innerHTML = buildUflip(s.uflip, true);
+
+  const fb = id('fbBox');
+  fb.className = `fb-box ${win?'fb-win':'fb-lose'}`;
+  id('fbHead').textContent = win ? '✓ Correct!' : '✗ Not quite';
+  id('fbBody').textContent = s.explain;
+  fb.style.display = 'block';
+
+  id('nextBtn').textContent = G.cur===SCENARIOS.length-1 ? 'See Results →' : 'Next Scenario →';
+}
+
+function nextScenario(){
+  G.cur++;
+  if(G.cur>=SCENARIOS.length){ showFinal(); } else { renderScene(); }
+}
+
+function showFinal(){
+  hide('gameScreen'); show('finalScreen');
+  const score=G.score, tot=SCENARIOS.length, pct=Math.round(score/tot*100);
+  id('finalScore').textContent = score;
+  id('finalOf').textContent = `out of ${tot}`;
+
+  let grade,col,msg;
+  if(pct===100){grade='🏆 Perfect Score!';col='#fbbf24';msg='You\'re a UFLIP pro — flawless!';}
+  else if(pct>=87){grade='⭐ Excellent';col='#4ade80';msg='Almost perfect. Sharp eyes!';}
+  else if(pct>=75){grade='👍 Good Job';col='#60a5fa';msg='Solid work! Review the misses and run it again.';}
+  else if(pct>=50){grade='📚 Keep Practicing';col='#f59e0b';msg='Pay close attention to totals and seat numbers.';}
+  else{grade='🎯 Keep Training';col='#f87171';msg='Review the feedback carefully and try again!';}
+
+  id('finalGrade').textContent=grade; id('finalGrade').style.color=col;
+  id('finalMsg').textContent=msg;
+
+  const errMap={quantity:'Wrong quantity',seats:'Wrong section/row/seats',price:'Wrong total price',event:'Wrong event/date/venue',delivery:'Wrong delivery method',seattype:'Wrong seat type'};
+  id('reviewTable').innerHTML = G.history.map(h=>`
+    <div class="rev-row">
+      <div class="rev-icon">${h.win?'✅':'❌'}</div>
+      <div>
+        <div class="rev-scenario">${h.s.platform} — ${h.s.cart.event}</div>
+        <div class="rev-detail">${h.win?'Correct':h.s.isCorrect?'Flagged as wrong — it was correct':('Missed: '+(errMap[h.s.correctErr]||h.s.correctErr))}</div>
+      </div>
+    </div>`).join('');
+}
+
+function restartGame(){ hide('finalScreen'); startGame(); }
+
+// ── helpers ──
+function id(x){return document.getElementById(x)}
+function show(x){id(x).style.display='block'}
+function hide(x){id(x).style.display='none'}
+</script>
+</body>
+</html>
